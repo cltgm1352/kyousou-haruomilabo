@@ -1,0 +1,14 @@
+{
+  "name": "multiplayer-race-game",
+  "version": "1.0.0",
+  "description": "A simple 2D multiplayer racing game using p5.js and WebSocket",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "author": "Your Name",
+  "license": "MIT"
+}
