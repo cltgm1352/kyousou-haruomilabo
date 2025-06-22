@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>2Dマルチプレイヤーレースゲーム</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+  <style>
+    body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f0f0f0; }
+    canvas { border: 2px solid black; }
+  </style>
+</head>
+<body>
+<script>
+let playerId;
+let players = {};
+let ws;
+
+function setup() {
+  createCanvas(800, 600);
+  ws = new WebSocket('ws://localhost:8080');
+  
+  ws.onopen = () => {
+    console.log('サーバーに接続しました');
+  };
+  
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === 'init') {
+      playerId = data.id;
+      players[playerId] = { x: data.x, y: data.y, color: data.color };
+    } else if (data.type === 'update') {
+      players = data.players;
+    } else if (data.type === 'win') {
+      alert(`プレイヤー${data.id}が勝利しました！`);
+      ws.close();
+    }
+  };
+  
+  ws.onclose = () => {
+    console.log('サーバーから切断されました');
+  };
+}
+
+function draw() {
+  background(220);
+  
+  // ゴールラインの描画
+  fill(255, 0, 0);
+  rect(750, 0, 10, 600);
+  
+  // プレイヤーの描画
+  for (let id in players) {
+    fill(players[id].color);
+    rect(players[id].x, players[id].y, 20, 20);
+  }
+}
+
+function keyPressed() {
+  let dx = 0, dy = 0;
+  if (keyCode === LEFT_ARROW) dx = -5;
+  if (keyCode === RIGHT_ARROW) dx = 5;
+  if (keyCode === UP_ARROW) dy = -5;
+  if (keyCode === DOWN_ARROW) dy = 5;
+  
+  if (dx !== 0 || dy !== 0) {
+    players[playerId].x += dx;
+    players[playerId].y += dy;
+    
+    // ゴール判定
+    if (players[playerId].x >= 750) {
+      ws.send(JSON.stringify({ type: 'win', id: playerId }));
+    } else {
+      ws.send(JSON.stringify({ type: 'move', id: playerId, x: players[playerId].x, y: players[playerId].y }));
+    }
+  }
+}
+</script>
+</body>
+</html>
